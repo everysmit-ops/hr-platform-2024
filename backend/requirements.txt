@@ -1,49 +1,24 @@
-aiofiles==24.1.0
-aiogram==3.17.0
-aiohappyeyeballs==2.6.1
-aiohttp==3.11.18
-aiosignal==1.4.0
-alembic==1.16.5
-annotated-doc==0.0.4
-annotated-types==0.7.0
-anyio==4.12.1
-async-timeout==5.0.1
-asyncpg==0.31.0
-attrs==25.4.0
-bcrypt==5.0.0
-certifi==2026.2.25
-charset-normalizer==3.4.5
-click==8.1.8
-databases==0.9.0
-ecdsa==0.19.1
-exceptiongroup==1.3.1
-fastapi==0.128.8
-frozenlist==1.8.0
-h11==0.16.0
-httpcore==1.0.9
-httpx==0.28.1
-idna==3.11
-magic-filter==1.0.12
-Mako==1.3.10
-MarkupSafe==3.0.3
-multidict==6.7.1
-passlib==1.7.4
-propcache==0.4.1
-psycopg2-binary==2.9.11
-pyasn1==0.6.2
-pydantic>=2.12.0
-pydantic_core==2.27.2
-python-dotenv==1.2.1
-python-jose==3.5.0
-python-multipart==0.0.20
-requests==2.32.5
-rsa==4.9.1
-six==1.17.0
-SQLAlchemy==2.0.48
-starlette==0.49.3
-tomli==2.4.0
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-urllib3==2.6.3
-uvicorn==0.39.0
-yarl==1.22.0
+# Core
+fastapi==0.115.0
+uvicorn[standard]==0.30.1
+python-dotenv==1.0.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# HTTP Client (for bot)
+httpx==0.27.0
+
+# CORS
+aiofiles==23.2.1
+
+# Pydantic (совместимая версия для Python 3.12)
+pydantic==2.5.3
+pydantic-core==2.14.6
