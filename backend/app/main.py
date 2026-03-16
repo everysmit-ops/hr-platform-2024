@@ -4,6 +4,13 @@ from app.database.database import engine
 from app.models import models
 from app.routers import auth, candidates, statistics, tasks, chat, profile, admin
 from app.routers import files
+from app.socket_manager import sio
+from app.routers import referrals
+from app.routers import news, broadcast
+from app.routers import training
+from app.routers import subscriptions, premium_profile, partner, teams
+
+import socketio
 
 # Создаем таблицы в базе данных
 models.Base.metadata.create_all(bind=engine)
@@ -13,6 +20,10 @@ app = FastAPI(
     description="API для HR платформы",
     version="1.0.0"
 )
+
+# Создаем ASGI приложение с поддержкой WebSocket
+app = FastAPI(title="HR Mini App API", description="API для HR платформы", version="1.0.0")
+socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 # Настройка CORS для продакшена
 app.add_middleware(
@@ -36,6 +47,14 @@ app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(files.router, prefix="/api/files", tags=["files"])
+app.include_router(referrals.router, prefix="/api/referrals", tags=["referrals"])
+app.include_router(news.router, prefix="/api/news", tags=["news"])
+app.include_router(broadcast.router, prefix="/api/broadcast", tags=["broadcast"])
+app.include_router(training.router, prefix="/api/training", tags=["training"])
+app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["subscriptions"])
+app.include_router(premium_profile.router, prefix="/api/premium-profile", tags=["premium-profile"])
+app.include_router(partner.router, prefix="/api/partner", tags=["partner"])
+app.include_router(teams.router, prefix="/api/teams", tags=["teams"])
 
 @app.get("/")
 async def root():
@@ -45,3 +64,7 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
+# Для запуска с WebSocket поддержкой
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:socket_app", host="0.0.0.0", port=8000, reload=True)

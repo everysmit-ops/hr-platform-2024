@@ -39,12 +39,15 @@ import {
   Settings as SettingsIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
+  Newspaper as NewsIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 
 import { ENDPOINTS } from '../config';
 import { useFetch, useApi } from '../hooks/useApi';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
+import { NewsList } from '../components/News/NewsList';
 
 interface Scout {
   id: number;
@@ -137,7 +140,7 @@ export default function AdminPanel() {
 
   const isLoading = tabValue === 0 ? statsLoading : scoutsLoading;
 
-  if (isLoading) {
+  if (isLoading && tabValue < 2) {
     return <LoadingState type="card" />;
   }
 
@@ -148,7 +151,10 @@ export default function AdminPanel() {
           ⚙️ Админ панель
         </Typography>
         <Box>
-          <IconButton onClick={() => tabValue === 0 ? refetchStats() : refetchScouts()}>
+          <IconButton onClick={() => {
+            if (tabValue === 0) refetchStats();
+            else if (tabValue === 1) refetchScouts();
+          }}>
             <RefreshIcon />
           </IconButton>
           <IconButton>
@@ -160,10 +166,13 @@ export default function AdminPanel() {
       <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
         <Tab icon={<BarChartIcon />} label="Статистика" />
         <Tab icon={<PersonAddIcon />} label="Скауты" />
+        <Tab icon={<NewsIcon />} label="Новости" />
+        <Tab icon={<SendIcon />} label="Рассылки" />
         <Tab icon={<AssignmentIcon />} label="Задачи" />
         <Tab icon={<SettingsIcon />} label="Настройки" />
       </Tabs>
 
+      {/* Статистика */}
       {tabValue === 0 && stats && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={3}>
@@ -264,6 +273,7 @@ export default function AdminPanel() {
         </Grid>
       )}
 
+      {/* Скауты */}
       {tabValue === 1 && (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -346,6 +356,35 @@ export default function AdminPanel() {
         </>
       )}
 
+      {/* Новости */}
+      {tabValue === 2 && (
+        <NewsList isAdmin={true} />
+      )}
+
+      {/* Рассылки */}
+      {tabValue === 3 && (
+        <BroadcastComponent />
+      )}
+
+      {/* Задачи */}
+      {tabValue === 4 && (
+        <Card sx={{ borderRadius: 2, p: 4, textAlign: 'center' }}>
+          <Typography color="text.secondary">
+            Управление задачами (в разработке)
+          </Typography>
+        </Card>
+      )}
+
+      {/* Настройки */}
+      {tabValue === 5 && (
+        <Card sx={{ borderRadius: 2, p: 4, textAlign: 'center' }}>
+          <Typography color="text.secondary">
+            Настройки системы (в разработке)
+          </Typography>
+        </Card>
+      )}
+
+      {/* Диалог добавления скаута */}
       <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Добавление нового скаута</DialogTitle>
         <DialogContent>

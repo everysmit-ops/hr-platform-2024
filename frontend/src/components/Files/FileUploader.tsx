@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -15,6 +15,7 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemSecondaryAction,
+  Paper,
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -23,9 +24,12 @@ import {
   Download as DownloadIcon,
   Image as ImageIcon,
   PictureAsPdf as PdfIcon,
+  Description as DocIcon,
+  TableChart as ExcelIcon,
 } from '@mui/icons-material';
 import { useApi } from '../../hooks/useApi';
 import { ENDPOINTS } from '../../config';
+import { FileViewer } from './FileViewer';
 
 interface FileUploaderProps {
   open: boolean;
@@ -36,10 +40,13 @@ interface FileUploaderProps {
 
 interface FileItem {
   id: number;
+  filename: string;
   original_name: string;
   file_size: number;
-  created_at: string;
+  file_path?: string;
   mime_type: string;
+  created_at: string;
+  uploaded_by: number;
 }
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
@@ -51,10 +58,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const [files, setFiles] = useState<FileItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const api = useApi();
 
-  // Загружаем список файлов при открытии
-  React.useEffect(() => {
+  useEffect(() => {
     if (open && candidateId) {
       loadFiles();
     }
@@ -82,9 +90,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
     const formData = new FormData();
     formData.append('file', file);
-    if (candidateId) {
-      formData.append('candidate_id', candidateId.toString());
-    }
+    formData.append('candidate_id', candidateId.toString());
 
     const result = await api.execute(
       fetch(ENDPOINTS.UPLOAD_FILE, {
@@ -107,23 +113,27 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   const handleDownload = async (fileId: number, filename: string) => {
-    const result = await api.execute(
-      fetch(ENDPOINTS.DOWNLOAD_FILE(fileId), {
+    try {
+      const response = await fetch(ENDPOINTS.DOWNLOAD_FILE(fileId), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-      })
-    );
-
-    if (result.success && result.data) {
-      // Создаем ссылку для скачивания
-      const url = window.URL.createObjectURL(new Blob([result.data]));
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      setError('Ошибка при скачивании файла');
     }
   };
 
@@ -141,90 +151,148 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
     if (result.success) {
       loadFiles();
+      if (selectedFile?.id === fileId) {
+        setViewerOpen(false);
+        setSelectedFile(null);
+      }
     }
+  };
+
+  const handleView = (file: FileItem) => {
+    setSelectedFile(file);
+    setViewerOpen(true);
   };
 
   const getFileIcon = (mimeType: string) => {
     if (mimeType.startsWith('image/')) return <ImageIcon />;
     if (mimeType === 'application/pdf') return <PdfIcon />;
+    if (mimeType.includes('word') || mimeType.includes('document')) return <DocIcon />;
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return <ExcelIcon />;
     return <FileIcon />;
   };
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>📎 Файлы кандидата</DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+    <>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <UploadIcon /> Файлы кандидата
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
 
-        <Box sx={{ mb: 3 }}>
-          <input
-            accept="*/*"
-            style={{ display: 'none' }}
-            id="file-upload"
-            type="file"
-            onChange={handleFileUpload}
-          />
-          <label htmlFor="file-upload">
-            <Button
-              variant="contained"
-              component="span"
-              startIcon={<UploadIcon />}
-              disabled={uploading}
-              fullWidth
-            >
-              Загрузить файл
-            </Button>
-          </label>
-          {uploading && <LinearProgress sx={{ mt: 1 }} />}
-        </Box>
+          <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: '#f9f9f9' }}>
+            <input
+              accept="*/*"
+              style={{ display: 'none' }}
+              id="file-upload"
+              type="file"
+              onChange={handleFileUpload}
+            />
+            <label htmlFor="file-upload">
+              <Button
+                variant="contained"
+                component="span"
+                startIcon={<UploadIcon />}
+                disabled={uploading}
+                fullWidth
+                sx={{ mb: uploading ? 1 : 0 }}
+              >
+                Загрузить файл
+              </Button>
+            </label>
+            {uploading && <LinearProgress sx={{ mt: 1 }} />}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              Максимальный размер файла: 10 MB
+            </Typography>
+          </Paper>
 
-        <List>
-          {files.map((file) => (
-            <ListItem key={file.id}>
-              <ListItemIcon>
-                {getFileIcon(file.mime_type)}
-              </ListItemIcon>
-              <ListItemText
-                primary={file.original_name}
-                secondary={`${formatFileSize(file.file_size)} • ${new Date(file.created_at).toLocaleDateString()}`}
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge="end"
-                  onClick={() => handleDownload(file.id, file.original_name)}
-                  sx={{ mr: 1 }}
-                >
-                  <DownloadIcon />
-                </IconButton>
-                <IconButton
-                  edge="end"
-                  onClick={() => handleDelete(file.id)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-          {files.length === 0 && (
-            <Typography color="text.secondary" align="center" sx={{ py: 2 }}>
+          {files.length === 0 ? (
+            <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
               Нет загруженных файлов
             </Typography>
+          ) : (
+            <List>
+              {files.map((file) => (
+                <Paper
+                  key={file.id}
+                  variant="outlined"
+                  sx={{ mb: 1 }}
+                >
+                  <ListItem
+                    button
+                    onClick={() => handleView(file)}
+                    sx={{
+                      '&:hover': {
+                        bgcolor: '#f5f5f5',
+                      },
+                    }}
+                  >
+                    <ListItemIcon>
+                      {getFileIcon(file.mime_type)}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={file.original_name}
+                      secondary={`${formatFileSize(file.file_size)} • ${new Date(file.created_at).toLocaleDateString()}`}
+                      primaryTypographyProps={{
+                        variant: 'body2',
+                        noWrap: true,
+                      }}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(file.id, file.original_name);
+                        }}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      >
+                        <DownloadIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        edge="end"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(file.id);
+                        }}
+                        size="small"
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                </Paper>
+              ))}
+            </List>
           )}
-        </List>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Закрыть</Button>
-      </DialogActions>
-    </Dialog>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Закрыть</Button>
+        </DialogActions>
+      </Dialog>
+
+      <FileViewer
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        file={selectedFile}
+        onDownload={(fileId) => handleDownload(fileId, selectedFile?.original_name || 'file')}
+        onDelete={handleDelete}
+      />
+    </>
   );
 };

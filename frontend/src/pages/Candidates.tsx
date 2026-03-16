@@ -19,6 +19,12 @@ import {
   Avatar,
   Tabs,
   Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Badge,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -26,10 +32,16 @@ import {
   Sort as SortIcon,
   PersonAdd as PersonAddIcon,
   Chat as ChatIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Pending as PendingIcon,
+  Schedule as ScheduleIcon,
+  Event as EventIcon,
+  EmojiEvents as SuccessIcon,
 } from '@mui/icons-material';
 
 import { ENDPOINTS } from '../config';
-import { useFetch } from '../hooks/useApi';
+import { useFetch, useApi } from '../hooks/useApi';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 
@@ -39,21 +51,30 @@ interface Candidate {
   name: string;
   username: string;
   keywords: string;
-  status: 'new' | 'contacted' | 'interview' | 'hired' | 'rejected';
+  status: 'new' | 'approved' | 'rejected' | 'interview_scheduled' | 'candidate_rejected' | 'partner_rejected' | 'registered' | 'successful';
+  interview_date?: string;
+  shifts_completed: number;
+  is_successful: boolean;
   found_date: string;
   chat: string;
   message_link: string;
   message_text: string;
   contacts: string;
   comments_count: number;
+  scout_name?: string;
+  rejection_reason?: string;
+  status_history?: any[];
 }
 
-const statusColors: Record<string, { bg: string; color: string; label: string }> = {
-  new: { bg: '#e3f2fd', color: '#1976d2', label: '🆕 Новый' },
-  contacted: { bg: '#fff3e0', color: '#ed6c02', label: '📞 Связались' },
-  interview: { bg: '#f3e5f5', color: '#9c27b0', label: '📅 Интервью' },
-  hired: { bg: '#e8f5e8', color: '#2e7d32', label: '🎯 Нанят' },
-  rejected: { bg: '#ffebee', color: '#d32f2f', label: '❌ Отказ' },
+const statusColors: Record<string, { bg: string; color: string; label: string; icon: any }> = {
+  new: { bg: '#e3f2fd', color: '#1976d2', label: '🆕 Новый', icon: <PendingIcon /> },
+  approved: { bg: '#e8f5e8', color: '#2e7d32', label: '✅ Анкета одобрена', icon: <CheckCircleIcon /> },
+  rejected: { bg: '#ffebee', color: '#d32f2f', label: '❌ Анкета отказана', icon: <CancelIcon /> },
+  interview_scheduled: { bg: '#fff3e0', color: '#ed6c02', label: '📅 Назначено собеседование', icon: <ScheduleIcon /> },
+  candidate_rejected: { bg: '#ffebee', color: '#d32f2f', label: '❌ Отказ кандидата', icon: <CancelIcon /> },
+  partner_rejected: { bg: '#ffebee', color: '#d32f2f', label: '❌ Отказ партнера', icon: <CancelIcon /> },
+  registered: { bg: '#e8f5e8', color: '#2e7d32', label: '📝 Регистрация', icon: <CheckCircleIcon /> },
+  successful: { bg: '#fff3e0', color: '#ed6c02', label: '🏆 Успешно', icon: <SuccessIcon /> },
 };
 
 export default function Candidates() {
@@ -62,29 +83,116 @@ export default function Candidates() {
   const [sortBy, setSortBy] = useState('date');
   const [page, setPage] = useState(1);
   const [tabValue, setTabValue] = useState(0);
-  const itemsPerPage = 10;
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openInterviewDialog, setOpenInterviewDialog] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [interviewDate, setInterviewDate] = useState('');
+  const [newCandidate, setNewCandidate] = useState({
+    name: '',
+    username: '',
+    keywords: '',
+    chat: '',
+    message_link: '',
+    message_text: '',
+    contacts: '',
+  });
+  const [createError, setCreateError] = useState<string | null>(null);
   
+  const itemsPerPage = 10;
   const navigate = useNavigate();
+  const api = useApi();
 
   const { data: candidates, isLoading, isError, error, refetch } = useFetch<Candidate[]>(
-    ENDPOINTS.CANDIDATES,
+    `${ENDPOINTS.CANDIDATES}?status=${statusFilter === 'all' ? '' : statusFilter}`,
+    { autoFetch: true, initialData: [] }
+  );
+
+  const { data: successfulCandidates } = useFetch<Candidate[]>(
+    ENDPOINTS.SUCCESSFUL_CANDIDATES,
     { autoFetch: true, initialData: [] }
   );
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    const statusMap = ['all', 'new', 'contacted', 'interview', 'hired', 'rejected'];
+    const statusMap = ['all', 'new', 'approved', 'rejected', 'interview_scheduled', 'candidate_rejected', 'partner_rejected', 'registered', 'successful'];
     setStatusFilter(statusMap[newValue]);
+  };
+
+  const handleCreateCandidate = async () => {
+    setCreateError(null);
+    
+    const result = await api.execute(
+      fetch(ENDPOINTS.CREATE_CANDIDATE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(newCandidate),
+      })
+    );
+
+    if (result.success) {
+      setOpenCreateDialog(false);
+      setNewCandidate({
+        name: '',
+        username: '',
+        keywords: '',
+        chat: '',
+        message_link: '',
+        message_text: '',
+        contacts: '',
+      });
+      refetch();
+    } else {
+      setCreateError(result.error || 'Ошибка при создании анкеты');
+    }
+  };
+
+  const handleScheduleInterview = async () => {
+    if (!selectedCandidate || !interviewDate) return;
+
+    const result = await api.execute(
+      fetch(`${ENDPOINTS.CANDIDATE_INTERVIEW(selectedCandidate.id)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ interview_date: interviewDate }),
+      })
+    );
+
+    if (result.success) {
+      setOpenInterviewDialog(false);
+      setSelectedCandidate(null);
+      setInterviewDate('');
+      refetch();
+    }
+  };
+
+  const handleUpdateShifts = async (candidateId: number) => {
+    const result = await api.execute(
+      fetch(`${ENDPOINTS.CANDIDATE_SHIFTS(candidateId)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+    );
+
+    if (result.success) {
+      refetch();
+    }
   };
 
   const filteredCandidates = Array.isArray(candidates) 
     ? candidates.filter((c: Candidate) => {
         const searchLower = searchQuery.toLowerCase();
-        const matchesSearch = 
+        return (
           c.name?.toLowerCase().includes(searchLower) ||
-          (c.keywords && c.keywords.toLowerCase().includes(searchLower));
-        const matchesStatus = statusFilter === 'all' ? true : c.status === statusFilter;
-        return matchesSearch && matchesStatus;
+          (c.keywords && c.keywords.toLowerCase().includes(searchLower))
+        );
       })
     : [];
 
@@ -101,6 +209,9 @@ export default function Candidates() {
     if (sortBy === 'status') {
       return (a.status || '').localeCompare(b.status || '');
     }
+    if (sortBy === 'shifts') {
+      return (b.shifts_completed || 0) - (a.shifts_completed || 0);
+    }
     return 0;
   });
 
@@ -109,18 +220,26 @@ export default function Candidates() {
     page * itemsPerPage
   );
 
-  const getStatusChip = (status: string) => {
+  const getStatusChip = (status: string, shifts?: number) => {
     const config = statusColors[status] || statusColors.new;
     return (
-      <Chip
-        label={config.label}
-        size="small"
-        sx={{
-          backgroundColor: config.bg,
-          color: config.color,
-          fontWeight: 500,
-        }}
-      />
+      <Box>
+        <Chip
+          icon={config.icon}
+          label={config.label}
+          size="small"
+          sx={{
+            backgroundColor: config.bg,
+            color: config.color,
+            fontWeight: 500,
+          }}
+        />
+        {status === 'successful' && shifts && (
+          <Typography variant="caption" display="block" sx={{ mt: 0.5, color: config.color }}>
+            Смен: {shifts}
+          </Typography>
+        )}
+      </Box>
     );
   };
 
@@ -148,11 +267,32 @@ export default function Candidates() {
         <Button
           variant="contained"
           startIcon={<PersonAddIcon />}
-          onClick={() => navigate('/candidates/add')}
+          onClick={() => setOpenCreateDialog(true)}
           sx={{ borderRadius: 2 }}
         >
-          Добавить
+          Создать анкету
         </Button>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Card sx={{ flex: 1, p: 2, textAlign: 'center' }}>
+          <Typography variant="h4" color="primary">
+            {candidates?.length || 0}
+          </Typography>
+          <Typography variant="body2">Всего кандидатов</Typography>
+        </Card>
+        <Card sx={{ flex: 1, p: 2, textAlign: 'center' }}>
+          <Typography variant="h4" color="success.main">
+            {successfulCandidates?.length || 0}
+          </Typography>
+          <Typography variant="body2">Успешных (2+ смены)</Typography>
+        </Card>
+        <Card sx={{ flex: 1, p: 2, textAlign: 'center' }}>
+          <Typography variant="h4" color="warning.main">
+            {candidates?.filter(c => c.status === 'new').length || 0}
+          </Typography>
+          <Typography variant="body2">На модерации</Typography>
+        </Card>
       </Box>
 
       <Tabs
@@ -164,10 +304,13 @@ export default function Candidates() {
       >
         <Tab label="Все" />
         <Tab label="🆕 Новые" />
-        <Tab label="📞 В работе" />
-        <Tab label="📅 Интервью" />
-        <Tab label="🎯 Нанятые" />
-        <Tab label="❌ Отказы" />
+        <Tab label="✅ Одобрено" />
+        <Tab label="❌ Отказано" />
+        <Tab label="📅 Собеседование" />
+        <Tab label="❌ Отказ кандидата" />
+        <Tab label="❌ Отказ партнера" />
+        <Tab label="📝 Регистрация" />
+        <Tab label="🏆 Успешные" />
       </Tabs>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -205,6 +348,7 @@ export default function Candidates() {
               <MenuItem value="date_asc">По дате ↑</MenuItem>
               <MenuItem value="name">По имени</MenuItem>
               <MenuItem value="status">По статусу</MenuItem>
+              <MenuItem value="shifts">По сменам</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -213,7 +357,6 @@ export default function Candidates() {
             fullWidth
             variant="outlined"
             startIcon={<FilterIcon />}
-            onClick={() => {}}
             sx={{ height: '56px', borderRadius: 2 }}
           >
             Фильтры
@@ -260,13 +403,18 @@ export default function Candidates() {
                             <Typography variant="body2" color="text.secondary">
                               {candidate.username ? `@${candidate.username}` : 'нет username'}
                             </Typography>
+                            {candidate.scout_name && (
+                              <Typography variant="caption" color="primary">
+                                Скаут: {candidate.scout_name}
+                              </Typography>
+                            )}
                           </Box>
                         </Box>
                       </Grid>
                       
                       <Grid item xs={12} sm={6} md={3}>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {candidate.keywords && candidate.keywords.split(',').slice(0, 3).map((kw: string, i: number) => (
+                          {candidate.keywords?.split(',').slice(0, 3).map((kw: string, i: number) => (
                             <Chip
                               key={i}
                               label={kw.trim()}
@@ -278,7 +426,12 @@ export default function Candidates() {
                       </Grid>
                       
                       <Grid item xs={12} sm={6} md={2}>
-                        {getStatusChip(candidate.status)}
+                        {getStatusChip(candidate.status, candidate.shifts_completed)}
+                        {candidate.interview_date && (
+                          <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                            📅 {new Date(candidate.interview_date).toLocaleDateString()}
+                          </Typography>
+                        )}
                       </Grid>
                       
                       <Grid item xs={12} sm={6} md={3}>
@@ -286,6 +439,18 @@ export default function Candidates() {
                           <Typography variant="caption" color="text.secondary">
                             {new Date(candidate.found_date).toLocaleDateString()}
                           </Typography>
+                          {candidate.status === 'registered' && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateShifts(candidate.id);
+                              }}
+                            >
+                              + Смена
+                            </Button>
+                          )}
                           <IconButton 
                             size="small" 
                             onClick={(e) => {
@@ -319,6 +484,115 @@ export default function Candidates() {
           )}
         </>
       )}
+
+      {/* Диалог создания анкеты */}
+      <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Создание новой анкеты</DialogTitle>
+        <DialogContent>
+          {createError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {createError}
+            </Alert>
+          )}
+          
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Имя *"
+                fullWidth
+                value={newCandidate.name}
+                onChange={(e) => setNewCandidate({ ...newCandidate, name: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Telegram Username"
+                fullWidth
+                value={newCandidate.username}
+                onChange={(e) => setNewCandidate({ ...newCandidate, username: e.target.value })}
+                placeholder="@username"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Ключевые слова"
+                fullWidth
+                value={newCandidate.keywords}
+                onChange={(e) => setNewCandidate({ ...newCandidate, keywords: e.target.value })}
+                placeholder="python, django, sql"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Название чата"
+                fullWidth
+                value={newCandidate.chat}
+                onChange={(e) => setNewCandidate({ ...newCandidate, chat: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Ссылка на сообщение"
+                fullWidth
+                value={newCandidate.message_link}
+                onChange={(e) => setNewCandidate({ ...newCandidate, message_link: e.target.value })}
+                placeholder="https://t.me/..."
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Текст сообщения"
+                fullWidth
+                multiline
+                rows={3}
+                value={newCandidate.message_text}
+                onChange={(e) => setNewCandidate({ ...newCandidate, message_text: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Контакты"
+                fullWidth
+                value={newCandidate.contacts}
+                onChange={(e) => setNewCandidate({ ...newCandidate, contacts: e.target.value })}
+                placeholder="Email, телефон и т.д."
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCreateDialog(false)}>Отмена</Button>
+          <Button 
+            onClick={handleCreateCandidate} 
+            variant="contained"
+            disabled={!newCandidate.name}
+          >
+            Создать
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог назначения собеседования */}
+      <Dialog open={openInterviewDialog} onClose={() => setOpenInterviewDialog(false)}>
+        <DialogTitle>Назначить собеседование</DialogTitle>
+        <DialogContent>
+          <TextField
+            type="datetime-local"
+            fullWidth
+            value={interviewDate}
+            onChange={(e) => setInterviewDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenInterviewDialog(false)}>Отмена</Button>
+          <Button onClick={handleScheduleInterview} variant="contained">
+            Назначить
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -1,0 +1,303 @@
+/* Глобальные стили приложения */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Основные цвета */
+  --primary-main: #2481cc;
+  --primary-light: #4da3e0;
+  --primary-dark: #1a5c9e;
+  --primary-gradient: linear-gradient(135deg, #2481cc 0%, #4da3e0 100%);
+  
+  --secondary-main: #ff6b6b;
+  --secondary-light: #ff8e8e;
+  --secondary-dark: #d44545;
+  
+  --success-main: #4caf50;
+  --warning-main: #ff9800;
+  --error-main: #f44336;
+  --info-main: #2196f3;
+  
+  /* Нейтральные цвета */
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-disabled: #bdc3c7;
+  
+  --background-default: #f8fafc;
+  --background-paper: #ffffff;
+  --background-dark: #1e1e1e;
+  
+  /* Тени */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+  
+  /* Скругления */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 24px;
+  
+  /* Анимации */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* Темная тема */
+[data-theme='dark'] {
+  --text-primary: #ecf0f1;
+  --text-secondary: #bdc3c7;
+  --background-default: #121212;
+  --background-paper: #1e1e1e;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* Кастомные стили для скроллбара */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-main);
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Утилиты */
+.fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+
+.slide-in {
+  animation: slideIn var(--transition-normal);
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.hover-scale {
+  transition: transform var(--transition-fast);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.hover-lift {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Градиентные тексты */
+.gradient-text {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Кастомные карточки */
+.modern-card {
+  background: var(--background-paper);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Кастомные кнопки */
+.modern-button {
+  padding: 10px 20px;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  text-transform: none;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width var(--transition-normal), height var(--transition-normal);
+}
+
+.modern-button:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Градиентные бордеры */
+.gradient-border {
+  position: relative;
+  background: var(--background-paper);
+  border-radius: var(--border-radius-md);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--primary-gradient);
+  border-radius: calc(var(--border-radius-md) + 2px);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* Статус бейджи */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.new {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.contacted {
+  background: #fff3e0;
+  color: #ed6c02;
+}
+
+.status-badge.interview {
+  background: #f3e5f5;
+  color: #9c27b0;
+}
+
+.status-badge.hired {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.status-badge.rejected {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.status-badge.pending {
+  background: #fff3e0;
+  color: #ed6c02;
+}
+
+.status-badge.approved {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+  :root {
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+  }
+  
+  .modern-card {
+    margin: 8px;
+  }
+}
+
+/* Печатные стили */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
