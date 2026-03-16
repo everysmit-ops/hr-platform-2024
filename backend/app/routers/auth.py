@@ -2,12 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from typing import Optional
 
 from app.database.database import get_db
 from app.models import models
-from app.schemas.schemas import UserCreate, UserResponse, TokenResponse, TelegramAuthData
+from app.schemas.schemas import (
+    TelegramAuthData,
+    TokenResponse,
+    UserResponse
+)
 
 router = APIRouter()
 
@@ -15,8 +18,6 @@ router = APIRouter()
 SECRET_KEY = "your-secret-key-change-this-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -29,7 +30,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 @router.post("/auth", response_model=TokenResponse)
-async def authenticate(auth_data: schemas.TelegramAuthData, db: Session = Depends(get_db)):
+async def authenticate(auth_data: TelegramAuthData, db: Session = Depends(get_db)):
     """Аутентификация через Telegram данные"""
     
     # Ищем пользователя по telegram_id
@@ -66,10 +67,34 @@ async def authenticate(auth_data: schemas.TelegramAuthData, db: Session = Depend
     )
     
     # Преобразуем в response схему
-    user_response = schemas.UserResponse.from_orm(user)
+    user_response = UserResponse.from_orm(user)
     
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": user_response
+    }
+
+@router.get("/users/{telegram_id}")
+async def get_user_by_telegram_id(
+    telegram_id: int,
+    db: Session = Depends(get_db)
+):
+    """Получить пользователя по Telegram ID"""
+    
+    user = db.query(models.User).filter(
+        models.User.telegram_id == telegram_id
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user.id,
+        "telegram_id": user.telegram_id,
+        "username": user.username,
+        "first_name": user.first_name,
+        "role": user.role,
+        "total_candidates": user.total_candidates,
+        "total_hired": user.total_hired
     }
