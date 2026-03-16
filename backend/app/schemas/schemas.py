@@ -147,6 +147,14 @@ class TeamMemberResponse(BaseModel):
     role: str
     joined_at: datetime
     commission_share: int
+
+class TelegramAuthData(BaseModel):
+    telegram_id: int
+    username: Optional[str] = None
+    first_name: str
+    last_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    referral_code: Optional[str] = None
     
     class Config:
         from_attributes = True
