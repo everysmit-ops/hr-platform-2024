@@ -1,0 +1,13 @@
+[net]
+git-fetch-with-cli = true
+
+[build]
+target-dir = "/tmp/cargo-target"
+
+[registry]
+global-credential-providers = []
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

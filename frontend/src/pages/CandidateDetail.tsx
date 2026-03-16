@@ -26,97 +26,119 @@ import {
   Cancel as CancelIcon,
   Send as SendIcon,
   Comment as CommentIcon,
+  AttachFile as AttachFileIcon,
 } from '@mui/icons-material';
 
+import { ENDPOINTS } from '../config';
+import { useApi, useFetch } from '../hooks/useApi';
+import { LoadingState } from '../components/LoadingState';
+import { ErrorState } from '../components/ErrorState';
+import { FileUploader } from '../components/Files/FileUploader';
+
 interface Candidate {
-  id: string;
+  id: number;
+  candidate_id: string;
   name: string;
   username: string;
   avatar?: string;
-  keywords: string[];
+  keywords: string;
   status: 'new' | 'contacted' | 'interview' | 'hired' | 'rejected';
-  foundDate: string;
+  found_date: string;
   chat: string;
-  messageLink: string;
-  text: string;
+  message_link: string;
+  message_text: string;
   contacts?: string;
-  comments?: Comment[];
+  comments_count: number;
 }
 
 interface Comment {
   id: number;
   text: string;
   author: string;
-  createdAt: string;
+  user_id: number;
+  created_at: string;
 }
 
 export default function CandidateDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [candidate, setCandidate] = useState<Candidate | null>(null);
-  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<Comment[]>([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [fileUploaderOpen, setFileUploaderOpen] = useState(false);
+
+  const api = useApi();
+
+  const { data: candidate, isLoading, isError, error, refetch } = useFetch<Candidate>(
+    ENDPOINTS.CANDIDATE_DETAIL(Number(id)),
+    { autoFetch: true }
+  );
 
   useEffect(() => {
-    // Мок-данные для тестирования
-    const mockCandidate: Candidate = {
-      id: id || '1',
-      name: 'Иван Петров',
-      username: 'ivan_petrov',
-      keywords: ['python', 'django', 'sql'],
-      status: 'new',
-      foundDate: new Date().toISOString(),
-      chat: 'Python Job Chat',
-      messageLink: 'https://t.me/test/123',
-      text: 'Ищу работу Python разработчиком. Опыт 3 года, стек: Django, FastAPI, PostgreSQL.',
-      contacts: 'ivan@mail.ru',
-      comments: [
-        {
-          id: 1,
-          text: 'Позвонил, договорились на собеседование',
-          author: 'Анна',
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    };
-    
-    setCandidate(mockCandidate);
-    setLoading(false);
+    if (id) {
+      fetchComments();
+    }
   }, [id]);
 
-  const handleStatusChange = (newStatus: string) => {
-    if (candidate) {
-      setCandidate({ ...candidate, status: newStatus as any });
+  const fetchComments = async () => {
+    const result = await api.execute(
+      fetch(ENDPOINTS.CANDIDATE_COMMENTS(Number(id)), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+    );
+
+    if (result.success && result.data) {
+      setComments(result.data as Comment[]);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    const result = await api.execute(
+      fetch(ENDPOINTS.CANDIDATE_STATUS(Number(id)), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+    );
+
+    if (result.success) {
       setSnackbar({
         open: true,
         message: 'Статус обновлен!',
         severity: 'success',
       });
+      refetch();
     }
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim() || !candidate) return;
-    
-    const newCommentObj: Comment = {
-      id: Date.now(),
-      text: newComment,
-      author: 'Вы',
-      createdAt: new Date().toISOString(),
-    };
-    
-    setCandidate({
-      ...candidate,
-      comments: [...(candidate.comments || []), newCommentObj],
-    });
-    
-    setNewComment('');
-    setSnackbar({
-      open: true,
-      message: 'Комментарий добавлен!',
-      severity: 'success',
-    });
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !id) return;
+
+    const result = await api.execute(
+      fetch(ENDPOINTS.CANDIDATE_COMMENTS(Number(id)), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ text: newComment }),
+      })
+    );
+
+    if (result.success) {
+      setNewComment('');
+      fetchComments();
+      setSnackbar({
+        open: true,
+        message: 'Комментарий добавлен!',
+        severity: 'success',
+      });
+    }
   };
 
   const getStatusChip = (status: string) => {
@@ -132,19 +154,18 @@ export default function CandidateDetail() {
     return <Chip label={config.label} color={config.color} />;
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <Typography>Загрузка...</Typography>
-      </Box>
-    );
+  if (isLoading) {
+    return <LoadingState type="card" />;
   }
 
-  if (!candidate) {
+  if (isError || !candidate) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">Кандидат не найден</Alert>
-      </Box>
+      <ErrorState 
+        error={error || undefined}
+        title="Ошибка загрузки"
+        message="Не удалось загрузить информацию о кандидате"
+        onRetry={refetch}
+      />
     );
   }
 
@@ -171,14 +192,14 @@ export default function CandidateDetail() {
                     sx={{ width: 80, height: 80, bgcolor: '#2481cc' }}
                     src={candidate.avatar}
                   >
-                    {candidate.name[0]}
+                    {candidate.name?.[0] || '?'}
                   </Avatar>
                   <Box>
                     <Typography variant="h4" fontWeight={700} gutterBottom>
-                      {candidate.name}
+                      {candidate.name || 'Без имени'}
                     </Typography>
                     <Typography variant="body1" color="text.secondary" gutterBottom>
-                      @{candidate.username}
+                      @{candidate.username || 'нет username'}
                     </Typography>
                     <Box sx={{ mt: 1 }}>
                       {getStatusChip(candidate.status)}
@@ -240,10 +261,18 @@ export default function CandidateDetail() {
                 <Button
                   variant="outlined"
                   startIcon={<ChatIcon />}
-                  onClick={() => window.open(candidate.messageLink, '_blank')}
+                  onClick={() => window.open(candidate.message_link, '_blank')}
                   sx={{ borderRadius: 2 }}
                 >
                   Открыть сообщение
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<AttachFileIcon />}
+                  onClick={() => setFileUploaderOpen(true)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Файлы
                 </Button>
               </Stack>
 
@@ -254,8 +283,8 @@ export default function CandidateDetail() {
                     Ключевые слова
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }}>
-                    {candidate.keywords.map((kw, i) => (
-                      <Chip key={i} label={kw} />
+                    {candidate.keywords?.split(',').map((kw, i) => (
+                      <Chip key={i} label={kw.trim()} />
                     ))}
                   </Box>
 
@@ -272,14 +301,14 @@ export default function CandidateDetail() {
                     Чат
                   </Typography>
                   <Typography variant="body2" paragraph>
-                    {candidate.chat}
+                    {candidate.chat || 'Не указан'}
                   </Typography>
 
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Дата добавления
                   </Typography>
                   <Typography variant="body2" paragraph>
-                    {new Date(candidate.foundDate).toLocaleString()}
+                    {new Date(candidate.found_date).toLocaleString()}
                   </Typography>
                 </Grid>
               </Grid>
@@ -290,7 +319,7 @@ export default function CandidateDetail() {
               </Typography>
               <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
                 <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-                  {candidate.text}
+                  {candidate.message_text || 'Нет текста сообщения'}
                 </Typography>
               </Paper>
             </CardContent>
@@ -303,7 +332,7 @@ export default function CandidateDetail() {
           <Card sx={{ borderRadius: 2, mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CommentIcon /> Комментарии ({candidate.comments?.length || 0})
+                <CommentIcon /> Комментарии ({comments.length})
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
@@ -321,13 +350,13 @@ export default function CandidateDetail() {
               </Box>
 
               <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-                {candidate.comments && candidate.comments.length > 0 ? (
-                  candidate.comments.map((comment) => (
+                {comments.length > 0 ? (
+                  comments.map((comment) => (
                     <Paper key={comment.id} variant="outlined" sx={{ p: 2, mb: 2 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography variant="subtitle2">{comment.author}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {new Date(comment.createdAt).toLocaleString()}
+                          {new Date(comment.created_at).toLocaleString()}
                         </Typography>
                       </Box>
                       <Typography variant="body2">{comment.text}</Typography>
@@ -355,6 +384,18 @@ export default function CandidateDetail() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* File uploader dialog */}
+      {candidate && (
+        <FileUploader
+          open={fileUploaderOpen}
+          onClose={() => setFileUploaderOpen(false)}
+          candidateId={candidate.id}
+          onUploadSuccess={() => {
+            // Можно обновить информацию о кандидате если нужно
+          }}
+        />
+      )}
     </Box>
   );
 }

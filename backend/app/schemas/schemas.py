@@ -142,3 +142,30 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+# File schemas
+class FileBase(BaseModel):
+    filename: str
+    original_name: str
+    file_size: int
+    mime_type: str
+    candidate_id: Optional[int] = None
+
+class FileCreate(FileBase):
+    uploaded_by: int
+
+class FileResponse(FileBase):
+    id: int
+    uploaded_by: int
+    created_at: datetime
+    file_path: str
+    
+    class Config:
+        from_attributes = True
+
+class FileUploadResponse(BaseModel):
+    id: int
+    filename: str
+    original_name: str
+    file_size: int
+    message: str = "File uploaded successfully"

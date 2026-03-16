@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.database import engine
 from app.models import models
 from app.routers import auth, candidates, statistics, tasks, chat, profile, admin
+from app.routers import files
 
 # Создаем таблицы в базе данных
 models.Base.metadata.create_all(bind=engine)
@@ -34,6 +35,7 @@ app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(profile.router, prefix="/api/profile", tags=["profile"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])
 
 @app.get("/")
 async def root():

@@ -32,3 +32,9 @@ export const ENDPOINTS = {
   ADMIN_SCOUTS: `${API_URL}/api/admin/scouts`,
   ADMIN_SCOUT_TOGGLE: (id: number) => `${API_URL}/api/admin/scouts/${id}/toggle`,
 };
+
+// Files
+UPLOAD_FILE: `${API_URL}/api/files/upload`,
+CANDIDATE_FILES: (id: number) => `${API_URL}/api/files/candidate/${id}`,
+DOWNLOAD_FILE: (id: number) => `${API_URL}/api/files/download/${id}`,
+DELETE_FILE: (id: number) => `${API_URL}/api/files/${id}`,

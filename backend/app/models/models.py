@@ -117,3 +117,23 @@ class Comment(Base):
     # Даты
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class File(Base):
+    __tablename__ = "files"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String)
+    original_name = Column(String)
+    file_path = Column(String)
+    file_size = Column(Integer)
+    mime_type = Column(String)
+    
+    # Связь с кандидатом (опционально)
+    candidate_id = Column(Integer, ForeignKey("candidates.id"), nullable=True)
+    candidate = relationship("Candidate")
+    
+    # Кто загрузил
+    uploaded_by = Column(Integer, ForeignKey("users.id"))
+    uploader = relationship("User", foreign_keys=[uploaded_by])
+    
+    # Даты
+    created_at = Column(DateTime, default=datetime.utcnow)

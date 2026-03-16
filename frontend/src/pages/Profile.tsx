@@ -96,6 +96,11 @@ export default function Profile() {
   const [tabValue, setTabValue] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [openSettings, setOpenSettings] = useState(false);
+  const [localSettings, setLocalSettings] = useState({
+    notifications: true,
+    darkMode: false,
+    language: 'ru'
+  });
 
   const api = useApi();
 
@@ -112,6 +117,11 @@ export default function Profile() {
   useEffect(() => {
     if (profile) {
       setEditedProfile(profile);
+      setLocalSettings(profile.settings || {
+        notifications: true,
+        darkMode: false,
+        language: 'ru'
+      });
     }
   }, [profile]);
 
@@ -185,6 +195,7 @@ export default function Profile() {
       </Typography>
 
       <Grid container spacing={3}>
+        {/* Левая колонка - основная информация */}
         <Grid item xs={12} md={4}>
           <Card sx={{ borderRadius: 2 }}>
             <CardContent>
@@ -358,6 +369,7 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* KPI Карточка */}
           <Card sx={{ borderRadius: 2, mt: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom fontWeight={600}>
@@ -407,6 +419,7 @@ export default function Profile() {
           </Card>
         </Grid>
 
+        {/* Правая колонка - статистика и активность */}
         <Grid item xs={12} md={8}>
           <Card sx={{ borderRadius: 2 }}>
             <CardContent>
@@ -416,6 +429,7 @@ export default function Profile() {
                 <Tab label="Достижения" />
               </Tabs>
 
+              {/* Вкладка Статистика */}
               {tabValue === 0 && stats && (
                 <Box>
                   <Typography variant="subtitle2" gutterBottom>
@@ -476,6 +490,7 @@ export default function Profile() {
                 </Box>
               )}
 
+              {/* Вкладка Активность */}
               {tabValue === 1 && (
                 <Box>
                   <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
@@ -484,6 +499,7 @@ export default function Profile() {
                 </Box>
               )}
 
+              {/* Вкладка Достижения */}
               {tabValue === 2 && (
                 <Box>
                   <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
@@ -494,6 +510,7 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* Последняя активность */}
           <Card sx={{ borderRadius: 2, mt: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom fontWeight={600}>
@@ -528,6 +545,7 @@ export default function Profile() {
         </Grid>
       </Grid>
 
+      {/* Диалог настроек */}
       <Dialog open={openSettings} onClose={() => setOpenSettings(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Настройки профиля</DialogTitle>
         <DialogContent>
@@ -535,11 +553,8 @@ export default function Profile() {
             <FormControlLabel
               control={
                 <Switch
-                  checked={profile.settings?.notifications}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    settings: { ...profile.settings, notifications: e.target.checked }
-                  })}
+                  checked={localSettings.notifications}
+                  onChange={(e) => setLocalSettings({ ...localSettings, notifications: e.target.checked })}
                 />
               }
               label="Включить уведомления"
@@ -547,11 +562,8 @@ export default function Profile() {
             <FormControlLabel
               control={
                 <Switch
-                  checked={profile.settings?.darkMode}
-                  onChange={(e) => setProfile({
-                    ...profile,
-                    settings: { ...profile.settings, darkMode: e.target.checked }
-                  })}
+                  checked={localSettings.darkMode}
+                  onChange={(e) => setLocalSettings({ ...localSettings, darkMode: e.target.checked })}
                 />
               }
               label="Темная тема"
@@ -559,12 +571,9 @@ export default function Profile() {
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Язык</InputLabel>
               <Select
-                value={profile.settings?.language || 'ru'}
+                value={localSettings.language}
                 label="Язык"
-                onChange={(e) => setProfile({
-                  ...profile,
-                  settings: { ...profile.settings, language: e.target.value as string }
-                })}
+                onChange={(e) => setLocalSettings({ ...localSettings, language: e.target.value })}
               >
                 <MenuItem value="ru">Русский</MenuItem>
                 <MenuItem value="en">English</MenuItem>
@@ -580,6 +589,7 @@ export default function Profile() {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar уведомления */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
