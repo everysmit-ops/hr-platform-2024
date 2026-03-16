@@ -2,36 +2,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.database import engine
 from app.models import models
-from app.routers import auth, candidates, statistics, tasks, chat, profile, admin
-from app.routers import files
+from app.routers import (
+    auth, candidates, statistics, tasks, chat, profile, admin,
+    files, referrals, news, broadcast, training,
+    subscriptions, premium_profile, partner, teams
+)
 from app.socket_manager import sio
-from app.routers import referrals
-from app.routers import news, broadcast
-from app.routers import training
-from app.routers import subscriptions, premium_profile, partner, teams
-
 import socketio
 
 # Создаем таблицы в базе данных
 models.Base.metadata.create_all(bind=engine)
 
+# Создаем основное FastAPI приложение
 app = FastAPI(
     title="HR Mini App API",
     description="API для HR платформы",
     version="1.0.0"
 )
 
-# Создаем ASGI приложение с поддержкой WebSocket
-app = FastAPI(title="HR Mini App API", description="API для HR платформы", version="1.0.0")
-socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
-
-# Настройка CORS для продакшена
+# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://heterochromous-isostructural-angelita.ngrok-free.dev",  # Замените на ваш URL фронтенда
-        "https://your-frontend.netlify.app"
+        "https://hr-frontend.vercel.app",
+        "https://hr-frontend-jk3w759tc-everysmit-ops-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -63,6 +58,9 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Создаем ASGI приложение с поддержкой WebSocket для запуска
+socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 # Для запуска с WebSocket поддержкой
 if __name__ == "__main__":
