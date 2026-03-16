@@ -146,3 +146,18 @@ class TeamInvite(BaseModel):
     telegram_id: Optional[int] = None
     role: str = "member"
     commission_share: int = 0
+
+class UserResponse(BaseModel):
+    id: int
+    telegram_id: int
+    username: Optional[str] = None
+    first_name: str
+    # ... остальные поля
+    
+    class Config:
+        from_attributes = True
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse

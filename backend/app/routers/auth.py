@@ -7,7 +7,7 @@ from typing import Optional
 
 from app.database.database import get_db
 from app.models import models
-from app.schemas import schemas
+from app.schemas.schemas import UserCreate, UserResponse, TokenResponse, TelegramAuthData
 
 router = APIRouter()
 
