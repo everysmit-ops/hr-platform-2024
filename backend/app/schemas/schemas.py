@@ -49,6 +49,16 @@ class UserSubscriptionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserBase(BaseModel):
+    telegram_id: int
+    username: Optional[str] = None
+    first_name: str
+    last_name: Optional[str] = None
+    # ... остальные поля
+
+class UserCreate(UserBase):
+    role: str = "scout"
+
 # Premium customization
 class PremiumProfileUpdate(BaseModel):
     animated_avatar: Optional[str] = None
