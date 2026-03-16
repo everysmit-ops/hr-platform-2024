@@ -29,10 +29,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ruLocale from 'date-fns/locale/ru';
 
+import { ENDPOINTS } from '../config';
 import { useFetch, useApi } from '../hooks/useApi';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
-import { ENDPOINTS } from '../config';
 
 interface Interview {
   id: number;
@@ -58,18 +58,18 @@ export default function Calendar() {
   const api = useApi();
 
   const { data: interviews, isLoading, isError, error, refetch } = useFetch<Interview[]>(
-    `${ENDPOINTS.BASE_URL}/api/interviews`,
+    ENDPOINTS.INTERVIEWS,
     { autoFetch: true, initialData: [] }
   );
 
-  const { data: candidatesokes, isLoading: candidatesLoading } = useFetch<any[]>(
+  const { data: candidates } = useFetch<any[]>(
     ENDPOINTS.CANDIDATES,
     { autoFetch: true, initialData: [] }
   );
 
   const handleCreateInterview = async () => {
     const result = await api.execute(
-      fetch(`${ENDPOINTS.BASE_URL}/api/interviews`, {
+      fetch(ENDPOINTS.INTERVIEWS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ export default function Calendar() {
     if (!selectedInterview) return;
 
     const result = await api.execute(
-      fetch(`${ENDPOINTS.BASE_URL}/api/interviews/${selectedInterview.id}`, {
+      fetch(ENDPOINTS.INTERVIEW_DETAIL(selectedInterview.id), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export default function Calendar() {
     if (!window.confirm('Удалить собеседование?')) return;
 
     const result = await api.execute(
-      fetch(`${ENDPOINTS.BASE_URL}/api/interviews/${id}`, {
+      fetch(ENDPOINTS.INTERVIEW_DETAIL(id), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -130,7 +130,7 @@ export default function Calendar() {
     );
   };
 
-  if (isLoading || candidatesLoading) {
+  if (isLoading) {
     return <LoadingState type="card" />;
   }
 
@@ -282,7 +282,7 @@ export default function Calendar() {
               label="Кандидат"
               onChange={(e) => setNewInterview({ ...newInterview, candidate_id: e.target.value })}
             >
-              {candidatesokes?.map((c) => (
+              {candidates?.map((c) => (
                 <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
               ))}
             </Select>

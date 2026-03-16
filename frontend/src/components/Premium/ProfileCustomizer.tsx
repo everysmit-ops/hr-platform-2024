@@ -42,7 +42,9 @@ import {
   Gradient as GradientIcon,
   Bolt as BoltIcon,
   ElectricBolt as NeonIcon,
-  Shadow as ShadowIcon,
+  FilterHdr as ShadowIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
   Save as SaveIcon,
   Preview as PreviewIcon,
 } from '@mui/icons-material';
@@ -73,6 +75,7 @@ export const ProfileCustomizer: React.FC = () => {
   const [nicknameEmoji, setNicknameEmoji] = useState('');
   const [emojiPosition, setEmojiPosition] = useState('before');
   const [selectedBadge, setSelectedBadge] = useState<string>('');
+  const [animatedAvatar, setAnimatedAvatar] = useState<File | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [uploading, setUploading] = useState(false);

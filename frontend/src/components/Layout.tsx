@@ -87,58 +87,16 @@ export default function Layout({ children, user }: LayoutProps) {
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-{/* Логотип Every Scouting */}
-<Box
-  sx={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: 1,
-    cursor: 'pointer',
-  }}
-  onClick={() => navigate('/dashboard')}
->
-  <Box
-    sx={{
-      width: 40,
-      height: 40,
-      borderRadius: 2,
-      background: 'linear-gradient(135deg, #2481cc 0%, #4da3e0 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'white',
-      fontWeight: 700,
-      fontSize: 18,
-    }}
-  >
-    ES
-  </Box>
-  <Box>
-    <Typography
-      variant="h6"
-      sx={{
-        fontWeight: 700,
-        lineHeight: 1.2,
-        background: 'linear-gradient(135deg, #2481cc 0%, #4da3e0 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      }}
-    >
-      Every
-    </Typography>
-    <Typography
-      variant="h6"
-      sx={{
-        fontWeight: 700,
-        lineHeight: 1.2,
-        color: 'text.primary',
-      }}
-    >
-      Scouting
-    </Typography>
-  </Box>
-</Box>
-
+      {/* Логотип */}
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+          }}
+          onClick={() => navigate('/dashboard')}
         >
           <Box
             sx={{
@@ -151,22 +109,35 @@ export default function Layout({ children, user }: LayoutProps) {
               justifyContent: 'center',
               color: 'white',
               fontWeight: 700,
-              fontSize: 20,
+              fontSize: 18,
             }}
           >
-            H
+            ES
           </Box>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #2481cc 0%, #4da3e0 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            HR Agent
-          </Typography>
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                lineHeight: 1.2,
+                background: 'linear-gradient(135deg, #2481cc 0%, #4da3e0 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Every
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                lineHeight: 1.2,
+                color: 'text.primary',
+              }}
+            >
+              Scouting
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
@@ -348,7 +319,6 @@ export default function Layout({ children, user }: LayoutProps) {
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       >
-        {/* Mobile drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -367,8 +337,6 @@ export default function Layout({ children, user }: LayoutProps) {
         >
           {drawer}
         </Drawer>
-
-        {/* Desktop drawer */}
         <Drawer
           variant="permanent"
           sx={{

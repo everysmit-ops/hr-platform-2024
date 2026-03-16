@@ -34,6 +34,7 @@ import {
   MenuBook as BookIcon,
   VideoLibrary as VideoIcon,
   Assignment as AssignmentIcon,
+  MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -95,7 +96,7 @@ export default function Training() {
         setSnackbar({
           open: true,
           message: accessCheck.message,
-          severity: 'warning',
+          severity: 'error',
         });
       }
     }

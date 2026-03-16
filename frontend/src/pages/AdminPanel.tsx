@@ -48,6 +48,7 @@ import { useFetch, useApi } from '../hooks/useApi';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 import { NewsList } from '../components/News/NewsList';
+import { BroadcastComponent } from '../components/Admin/Broadcast';
 
 interface Scout {
   id: number;

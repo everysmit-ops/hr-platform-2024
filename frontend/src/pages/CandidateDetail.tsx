@@ -20,13 +20,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineDot,
-  TimelineConnector,
-  TimelineContent,
-  TimelineOppositeContent,
   LinearProgress,
 } from '@mui/material';
 import {
@@ -45,6 +38,15 @@ import {
   EmojiEvents as SuccessIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineDot,
+  TimelineConnector,
+  TimelineContent,
+  TimelineOppositeContent,
+} from '@mui/lab';
 
 import { ENDPOINTS } from '../config';
 import { useApi, useFetch } from '../hooks/useApi';
@@ -639,7 +641,7 @@ export default function CandidateDetail() {
                         }>
                           {getStatusTimelineIcon(event.status)}
                         </TimelineDot>
-                        {index < candidate.status_history.length - 1 && <TimelineConnector />}
+                        {candidate.status_history && index < candidate.status_history.length - 1 && <TimelineConnector />}	
                       </TimelineSeparator>
                       <TimelineContent sx={{ py: '12px', px: 2 }}>
                         <Typography variant="body2" fontWeight={600}>

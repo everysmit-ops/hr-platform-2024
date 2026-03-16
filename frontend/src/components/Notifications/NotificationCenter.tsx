@@ -84,7 +84,7 @@ export const NotificationCenter: React.FC = () => {
       setSnackbar({
         open: true,
         message: data.title,
-        severity: data.priority === 'high' ? 'warning' : 'info',
+        severity: data.priority === 'high' ? 'error' : 'success',
       });
     };
 
