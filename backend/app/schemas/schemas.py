@@ -1,3 +1,7 @@
+from pydantic import BaseModel  # <- ЭТОЙ СТРОКИ НЕ ХВАТАЕТ
+from typing import Optional, List, Dict
+from datetime import datetime
+
 # Subscription schemas
 class SubscriptionPlanBase(BaseModel):
     name: str
