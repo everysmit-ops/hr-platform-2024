@@ -6,7 +6,7 @@ from typing import Optional
 
 from app.database.database import get_db
 from app.models import models
-from app.routers.auth import SECRET_KEY, ALGORITHM
+from app.routers.auth_local import SECRET_KEY, ALGORITHM  # Импортируем из auth_local
 
 security = HTTPBearer()
 
@@ -19,8 +19,8 @@ def get_current_user(
     
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        telegram_id: str = payload.get("sub")
-        if telegram_id is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials"
@@ -32,7 +32,7 @@ def get_current_user(
         )
     
     user = db.query(models.User).filter(
-        models.User.telegram_id == int(telegram_id)
+        models.User.id == int(user_id)
     ).first()
     
     if user is None:
