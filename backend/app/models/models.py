@@ -3,13 +3,20 @@ from sqlalchemy.orm import relationship
 from app.database.database import Base
 from datetime import datetime
 
-
 class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
-    telegram_id = Column(Integer, unique=True, index=True)
+    
+    # Аутентификация (новые поля)
+    email = Column(String, unique=True, index=True, nullable=True)  # Может быть null пока
+    hashed_password = Column(String, nullable=True)  # Может быть null пока
+    
+    # Telegram данные (оставляем для обратной совместимости)
+    telegram_id = Column(Integer, unique=True, index=True, nullable=True)
     username = Column(String, nullable=True)
+    
+    # Основная информация
     first_name = Column(String)
     last_name = Column(String, nullable=True)
     
@@ -18,16 +25,8 @@ class User(Base):
     cover_image = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
     phone = Column(String, nullable=True)
-    email = Column(String, nullable=True)
     city = Column(String, nullable=True)
     birth_date = Column(DateTime, nullable=True)
-    
-    # ПРЕМИУМ КАСТОМИЗАЦИЯ
-    animated_avatar = Column(String, nullable=True)  # GIF/видео аватар
-    nickname_style = Column(JSON, default={})  # стиль ника (цвет, шрифт, эффекты)
-    nickname_emoji = Column(String, nullable=True)  # эмодзи рядом с ником
-    custom_badge = Column(JSON, default={})  # кастомный бейдж
-    profile_theme = Column(JSON, default={})  # кастомная тема профиля
     
     # Социальные сети
     instagram = Column(String, nullable=True)
@@ -36,28 +35,23 @@ class User(Base):
     github = Column(String, nullable=True)
     website = Column(String, nullable=True)
     
-    # Настройки профиля
+    # Настройки
     theme = Column(String, default='light')
     notifications_enabled = Column(Boolean, default=True)
     email_notifications = Column(Boolean, default=False)
     language = Column(String, default='ru')
     profile_settings = Column(JSON, default={})
     
-    # Подписка
-    subscription = relationship("UserSubscription", back_populates="user", uselist=False)
+    # Премиум кастомизация
+    animated_avatar = Column(String, nullable=True)
+    nickname_style = Column(JSON, default={})
+    nickname_emoji = Column(String, nullable=True)
+    custom_badge = Column(JSON, default={})
     
-    # Партнерская программа
-    partner = relationship("Partner", back_populates="user", uselist=False)
-    
-    # Команда
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    team_role = Column(String, default="member")  # owner, admin, member
-    team_joined_at = Column(DateTime, nullable=True)
-    
-    # Реферальная система
-    referral_code = Column(String, unique=True, nullable=True)
-    referred_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    referral_bonus = Column(Integer, default=0)
+    # Роль и права
+    role = Column(String, default="scout")
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
     
     # Статистика
     total_candidates = Column(Integer, default=0)
@@ -66,11 +60,22 @@ class User(Base):
     kpi_target = Column(Integer, default=5)
     kpi_current = Column(Integer, default=0)
     
+    # Реферальная система
+    referral_code = Column(String, unique=True, nullable=True)
+    referred_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    referral_bonus = Column(Integer, default=0)
+    
+    # Команда
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    team_role = Column(String, default="member")
+    team_joined_at = Column(DateTime, nullable=True)
+    
     # Даты
     created_at = Column(DateTime, default=datetime.utcnow)
     last_active = Column(DateTime, default=datetime.utcnow)
-    is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
+    
+    # Подписка
+    subscription = relationship("UserSubscription", back_populates="user", uselist=False)
     
     # Связи
     candidates = relationship("Candidate", back_populates="scout")
@@ -79,7 +84,6 @@ class User(Base):
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
     received_messages = relationship("Message", foreign_keys="Message.receiver_id", back_populates="receiver")
     referrals = relationship("Referral", foreign_keys="Referral.referrer_id", back_populates="referrer")
-    referred_users = relationship("User", remote_side=[id], backref="referrer")
     trainings = relationship("UserTraining", back_populates="user")
 
 class Candidate(Base):

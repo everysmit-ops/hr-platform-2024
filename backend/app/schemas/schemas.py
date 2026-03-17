@@ -73,15 +73,6 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-# Auth schemas
-class TelegramAuthData(BaseModel):
-    telegram_id: int
-    username: Optional[str] = None
-    first_name: str
-    last_name: Optional[str] = None
-    photo_url: Optional[str] = None
-    referral_code: Optional[str] = None
-
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -493,3 +484,19 @@ class PartnerTransactionResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# Auth schemas (новые, без Telegram)
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: "UserResponse"
