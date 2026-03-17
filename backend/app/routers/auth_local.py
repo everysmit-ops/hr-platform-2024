@@ -37,6 +37,9 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: Optional[str] = None
     role: str
+    total_candidates: Optional[int] = 0
+    total_hired: Optional[int] = 0
+    rating: Optional[float] = 0.0
     
     class Config:
         from_attributes = True
@@ -152,4 +155,3 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     if user is None:
         raise credentials_exception
     return user
-
