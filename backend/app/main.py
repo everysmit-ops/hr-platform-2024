@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database.database import engineч
+from app.database.database import engine
 from app.routers import auth_local
 from app.models import models
 from app.routers import (
