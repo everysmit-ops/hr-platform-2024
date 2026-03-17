@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database.database import engine
+from app.database.database import engineч
+from app.routers import auth_local
 from app.models import models
 from app.routers import (
     auth, candidates, statistics, tasks, chat, profile, admin,
@@ -49,6 +50,7 @@ app.include_router(subscriptions.router, prefix="/api/subscriptions", tags=["sub
 app.include_router(premium_profile.router, prefix="/api/premium-profile", tags=["premium-profile"])
 app.include_router(partner.router, prefix="/api/partner", tags=["partner"])
 app.include_router(teams.router, prefix="/api/teams", tags=["teams"])
+app.include_router(auth_local.router, prefix="/api/auth", tags=["auth"])
 
 @app.get("/")
 async def root():
