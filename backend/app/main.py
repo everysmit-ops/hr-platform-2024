@@ -25,7 +25,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://hr-platform-2024.vercel.app"
+        "https://frontend-theta-navy-46.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
