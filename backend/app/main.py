@@ -25,8 +25,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://hr-frontend.vercel.app",
-        "https://hr-frontend-jk3w759tc-everysmit-ops-projects.vercel.app"
+        "https://hr-platform-2024.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
